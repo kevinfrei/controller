@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @flow
 
 'use strict';
 
@@ -10,9 +9,7 @@ var file = process.argv[2];
 var scale = process.argv[3] !== '--no-scale';
 
 var graphic = function(inHeight, inWidth) {
-  debugger ;
   var pageWidth = 8;
-  var pageMaxLength = 132;
   var height = inHeight;
   var width = inWidth;
 
@@ -33,8 +30,8 @@ var graphic = function(inHeight, inWidth) {
 
   var setPixel = function(x, y) {
     var page = Math.floor((height - y) / pageWidth);
-    if (page === 4) {
-      console.log("YAR", x, ",", y);
+    if (page >= 4) {
+      console.log("Out of Bounds: ", x, ",", y);
     }
     var byte = x;
     var bit = Math.floor((height - y) % pageWidth);
@@ -45,17 +42,24 @@ var graphic = function(inHeight, inWidth) {
   };
   var getArray = function () {
     var struct = '{\n';
+    var numLines = 0;
     for (i = 0; i < pageCount; i++) {
       for (j = 0; j < pageData[i].length; j++) {
         struct += '0x' + ('0' + pageData[i][j].toString(16)).substr(-2) + ', ';
+        if (++numLines === 16) {
+          struct += '\n';
+          numLines = 0;
+        }
       }
     }
-    struct += '\n}';
+    if (numLines !== 0) {
+      struct += '\n';
+    }
+    struct += '}';
     return struct;
   };
   var preview = function () {
     var byte;
-
     var txt = '+';
     for (i = 0; i < width; i++) {
       txt += '-';
@@ -89,47 +93,23 @@ var graphic = function(inHeight, inWidth) {
   };
 };
 
-var show = function (img) {
-  var lastY = -1;
-  var txt = '-----';
-  img.scan(0, 0, img.bitmap.width, img.bitmap.height, function (x, y, idx) {
-    if (lastY !== y) {
-      //console.log(txt);
-      txt = '';
-      lastY = y;
-    }
-    txt += (this.bitmap.data[idx] > 0x7f) ? '*' : ' ';
-  });
-  // console.log(txt);
-  // console.log('-----');
-}
 jimp.read(file).then(function (img) {
-  show(img);
   var newImage = new jimp(maxWidth, maxHeight, 0xFFFFFFFF);
-  show(newImage);
   // Scale the image to fit
-  var scaledInput;
-  if (scale) {
-    scaledInput = img.background(0xFFFFFFFF).contain(maxWidth, maxHeight);
-    show(scaledInput);
-  } else {
-    scaledInput = img;
-  }
+  var scaledInput = scale ?
+    img.background(0xFFFFFFFF).contain(maxWidth, maxHeight) : img;
   var x = scaledInput.bitmap.width;
   var y = scaledInput.bitmap.height;
   if (x > maxWidth || y > maxHeight) {
     console.log("Your image doesn't fit - try not using --no-scale");
     return;
   }
+  // Center the image in the output image
   x = (maxWidth - x) / 2;
   y = (maxHeight - y) / 2;
-  // Center the image in the output image
-  newImage = newImage.blit(scaledInput, x, y);
-  show(newImage);
-  newImage = newImage.greyscale();
-  show(newImage);
   var outImage = graphic(maxHeight, maxWidth);
-  newImage.scan(0, 0, newImage.bitmap.width, newImage.bitmap.height,
+  newImage.blit(scaledInput, x, y).greyscale()
+    .scan(0, 0, newImage.bitmap.width, newImage.bitmap.height, 
     function (x, y, idx) {
       var r = this.bitmap.data[idx];
       if (r < 0x80) {
