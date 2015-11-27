@@ -25,6 +25,7 @@
 *.rar
 *.tar
 *.zip
+node_modules
 
 # Logs and databases #
 ######################
@@ -60,4 +61,3 @@ cmake_install.cmake
 # External Repos #
 ##################
 kll
-

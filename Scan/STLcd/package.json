@@ -1,0 +1,15 @@
+{
+  "name": "bitmap2struct",
+  "version": "1.0.0",
+  "description": "NodeJS version of the python script. Because I can't get PIL installed :(",
+  "main": "bitmap2struct.js",
+  "dependencies": {
+    "jimp": "^0.2.19"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin Frei",
+  "license": "DontBlameMe"
+}
