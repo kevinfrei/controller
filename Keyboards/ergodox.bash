@@ -24,7 +24,7 @@ BaseMap="defaultMap leftHand slave1 rightHand"
 # NOTE: To combine kll files into a single layout, separate them by spaces
 # e.g.  DefaultMap="mylayout mylayoutmod"
 #DefaulMap="mdergo1Overlay lcdFuncMap"
-DefaultMap="Freik-0 mdergo1Overlay lcdFuncMap"
+DefaultMap="Kustom-0-Base lcdFuncMap"
 
 # This is where you set the additional layers
 # NOTE: Indexing starts at 1
@@ -32,11 +32,12 @@ DefaultMap="Freik-0 mdergo1Overlay lcdFuncMap"
 # e.g.  PartialMaps[1]="layer1 layer1mod"
 #       PartialMaps[2]="layer2"
 #       PartialMaps[3]="layer3"
-#PartialMaps[1]="iced_func"
-#PartialMaps[2]="iced_numpad"
-PartialMaps[1]="Freik-1 lcdFuncMap"
-PartialMaps[2]="Freik-2 lcdFuncMap"
-PartialMaps[3]="Freik-7 lcdFuncMap"
+PartialMaps[1]="Kustom-0-Base Kustom-1-Base lcdFuncMap"
+PartialMaps[2]="Kustom-1-Base Kustom-0-Base Kustom-2-Mac lcdFuncMap"
+PartialMaps[3]="Kustom-1-Base Kustom-0-Base Kustom-3-Win lcdFuncMap"
+PartialMaps[4]="Kustom-1-Base Kustom-0-Base Kustom-4-NumPad lcdFuncMap"
+PartialMaps[5]="Kustom-1-Base Kustom-0-Base Kustom-5-Fn lcdFuncMap"
+PartialMaps[6]="Kustom-1-Base Kustom-0-Base Kustom-6-Game lcdFuncMap"
 
 
 

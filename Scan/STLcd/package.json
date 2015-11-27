@@ -4,7 +4,8 @@
   "description": "NodeJS version of the python script. Because I can't get PIL installed :(",
   "main": "bitmap2struct.js",
   "dependencies": {
-    "jimp": "^0.2.19"
+    "jimp": "^0.2.19",
+    "minimist": "^1.2.0"
   },
   "devDependencies": {},
   "scripts": {

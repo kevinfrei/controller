@@ -1,12 +1,27 @@
 #!/usr/bin/env node
-
+// To use this, you'll need to type 'npm install' to get the jimp module downloaded
 'use strict';
 
+var error = false;
 var jimp = require('jimp');
+var argv = require('minimist')(process.argv.slice(2), {
+  boolean: ['noscaling', 'square'],
+  alias: {s:'noscaling'},
+  unknown: function(a) {error = a[0] === '-';}
+});
 var maxHeight = 32;
 var maxWidth = 128;
-var file = process.argv[2];
-var scale = process.argv[3] !== '--no-scale';
+if (error) {
+  console.log("Usage:");
+  console.log(process.argv[1], " {-s|--noscaling} file(s)...");
+  process.exit(-1);
+}
+var scale = !argv.noscaling;
+if (argv.square) {
+  maxWidth = maxHeight;
+}
+var files = argv._;
+var count;
 
 var graphic = function(inHeight, inWidth) {
   var pageWidth = 8;
@@ -93,31 +108,32 @@ var graphic = function(inHeight, inWidth) {
   };
 };
 
-jimp.read(file).then(function (img) {
-  var newImage = new jimp(maxWidth, maxHeight, 0xFFFFFFFF);
-  // Scale the image to fit
-  var scaledInput = scale ?
-    img.background(0xFFFFFFFF).contain(maxWidth, maxHeight) : img;
-  var x = scaledInput.bitmap.width;
-  var y = scaledInput.bitmap.height;
-  if (x > maxWidth || y > maxHeight) {
-    console.log("Your image doesn't fit - try not using --no-scale");
-    return;
-  }
-  // Center the image in the output image
-  x = (maxWidth - x) / 2;
-  y = (maxHeight - y) / 2;
-  var outImage = graphic(maxHeight, maxWidth);
-  newImage.blit(scaledInput, x, y).greyscale()
-    .scan(0, 0, newImage.bitmap.width, newImage.bitmap.height, 
-    function (x, y, idx) {
-      var r = this.bitmap.data[idx];
-      if (r < 0x80) {
-        outImage.setPixel(x, y + 1);
-      }
-    });
-  console.log(outImage.preview());
-  console.log(outImage.getArray());
-}).catch(function (err) {
-  console.log(err);
-});
+for (count = 0; count < files.length; count++) {
+  jimp.read(files[count]).then(function (img) {
+    var newImage = new jimp(maxWidth, maxHeight, 0xFFFFFFFF);
+    // Scale the image to fit
+    var scaledInput = scale ?
+      img.background(0xFFFFFFFF).contain(maxWidth, maxHeight) : img;
+    var x = scaledInput.bitmap.width;
+    var y = scaledInput.bitmap.height;
+    if (x > maxWidth || y > maxHeight) {
+      console.log("Your image doesn't fit - try not using --no-scale");
+      return;
+    }
+    // Center the image in the output image
+    x = (maxWidth - x) / 2;
+    y = (maxHeight - y) / 2;
+    var outImage = graphic(maxHeight, maxWidth);
+    newImage.blit(scaledInput, x, y).greyscale()
+      .scan(0, 0, newImage.bitmap.width, newImage.bitmap.height,
+      function (x, y, idx) {
+        if (this.bitmap.data[idx] < 0x80) {
+          outImage.setPixel(x, y + 1);
+        }
+      });
+    console.log(outImage.preview());
+    console.log(outImage.getArray());
+  }).catch(function (err) {
+    console.log(err);
+  });
+}
