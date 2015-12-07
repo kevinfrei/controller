@@ -33,13 +33,11 @@ DefaultMap="Kustom-0-Base lcdFuncMap"
 #       PartialMaps[2]="layer2"
 #       PartialMaps[3]="layer3"
 PartialMaps[1]="Kustom-0-Base Kustom-1-Base lcdFuncMap"
-PartialMaps[2]="Kustom-1-Base Kustom-0-Base Kustom-2-Mac lcdFuncMap"
-PartialMaps[3]="Kustom-1-Base Kustom-0-Base Kustom-3-Win lcdFuncMap"
-PartialMaps[4]="Kustom-1-Base Kustom-0-Base Kustom-4-NumPad lcdFuncMap"
-PartialMaps[5]="Kustom-1-Base Kustom-0-Base Kustom-5-Fn lcdFuncMap"
-PartialMaps[6]="Kustom-1-Base Kustom-0-Base Kustom-6-Game lcdFuncMap"
-
-
+PartialMaps[2]="Kustom-0-Base Kustom-1-Base Kustom-2-Mac lcdFuncMap"
+PartialMaps[3]="Kustom-0-Base Kustom-1-Base Kustom-3-Win lcdFuncMap"
+PartialMaps[4]="Kustom-0-Base Kustom-1-Base Kustom-4-NumPad lcdFuncMap"
+PartialMaps[5]="Kustom-0-Base Kustom-1-Base Kustom-5-Fn lcdFuncMap"
+PartialMaps[6]="Kustom-0-Base Kustom-1-Base Kustom-6-Game lcdFuncMap"
 
 ##########################
 # Advanced Configuration #
