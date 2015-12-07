@@ -10,10 +10,11 @@ var argv = require('minimist')(process.argv.slice(2), {
   unknown: function(a) {error = a[0] === '-';}
 });
 var maxHeight = 32;
-var maxWidth = 128;
+var maxWidth = 128; // Default
 if (error) {
   console.log("Usage:");
-  console.log(process.argv[1], " {-s|--noscaling} file(s)...");
+  console.log(process.argv[1], " {-s|--noscaling} {--square} file(s)...");
+  console.log("--square results in a 32x32 bitmap, to use instead of numbers")
   process.exit(-1);
 }
 var scale = !argv.noscaling;
