@@ -47,6 +47,8 @@
 // ----- Macros -----
 
 // Used to build a bitmap lookup table from a byte addressable array
+// Instead, all the switches can just use some simple math:
+// bytePosition = byte >> 3; byteShift = byte & 7;
 #define byteLookup( byte ) case (( byte ) * ( 8 )):         bytePosition = byte; byteShift = 0; break; \
                            case (( byte ) * ( 8 ) + ( 1 )): bytePosition = byte; byteShift = 1; break; \
                            case (( byte ) * ( 8 ) + ( 2 )): bytePosition = byte; byteShift = 2; break; \
@@ -381,7 +383,9 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 			// Lookup (otherwise division or multiple checks are needed to do alignment)
 			// Starting at 0th position, each byte has 8 bits, starting at 4th bit
 			uint8_t keyPos = key + (0 * 8 - 4); // Starting position in array, Ignoring 4 keys
-			switch ( keyPos )
+      // Hurray for math!
+      bytePosition = keyPos >> 3; byteShift = keyPos & 7;
+			/*switch ( keyPos )
 			{
 				byteLookup( 0 );
 				byteLookup( 1 );
@@ -389,7 +393,7 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 				byteLookup( 3 );
 				byteLookup( 4 );
 				byteLookup( 5 );
-			}
+			}*/
 
 			USBKeys_Changed |= USBKeyChangeState_MainKeys;
 		}
@@ -399,7 +403,8 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 			// Lookup (otherwise division or multiple checks are needed to do alignment)
 			// Starting at 6th byte position, each byte has 8 bits, starting at 51st bit
 			uint8_t keyPos = key + (6 * 8 - 51); // Starting position in array
-			switch ( keyPos )
+      bytePosition = keyPos >> 3; byteShift = keyPos & 7;
+			/*switch ( keyPos )
 			{
 				byteLookup( 6 );
 				byteLookup( 7 );
@@ -415,7 +420,7 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 				byteLookup( 17 );
 				byteLookup( 18 );
 				byteLookup( 19 );
-			}
+			}*/
 
 			USBKeys_Changed |= USBKeyChangeState_SecondaryKeys;
 		}
@@ -424,10 +429,11 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 		{
 			// Lookup (otherwise division or multiple checks are needed to do alignment)
 			uint8_t keyPos = key + (20 * 8 - 157); // Starting position in array, Ignoring 6 keys
-			switch ( keyPos )
+      bytePosition = keyPos >> 3; byteShift = keyPos & 7;
+			/*switch ( keyPos )
 			{
 				byteLookup( 20 );
-			}
+			}*/
 
 			USBKeys_Changed |= USBKeyChangeState_TertiaryKeys;
 		}
@@ -436,7 +442,8 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 		{
 			// Lookup (otherwise division or multiple checks are needed to do alignment)
 			uint8_t keyPos = key + (21 * 8 - 176); // Starting position in array
-			switch ( keyPos )
+      bytePosition = keyPos >> 3; byteShift = keyPos & 7;
+			/*switch ( keyPos )
 			{
 				byteLookup( 21 );
 				byteLookup( 22 );
@@ -444,7 +451,7 @@ void Output_usbCodeSend_capability( uint8_t state, uint8_t stateType, uint8_t *a
 				byteLookup( 24 );
 				byteLookup( 25 );
 				byteLookup( 26 );
-			}
+			}*/
 
 			USBKeys_Changed |= USBKeyChangeState_QuartiaryKeys;
 		}
@@ -698,4 +705,3 @@ void cliFunc_setMod( char* args )
 
 	USBKeys_ModifiersCLI = numToInt( arg1Ptr );
 }
-
