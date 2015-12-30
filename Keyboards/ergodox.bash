@@ -38,6 +38,11 @@ PartialMaps[3]="Kustom-0-Base Kustom-1-Base Kustom-3-Win lcdFuncMap"
 PartialMaps[4]="Kustom-0-Base Kustom-1-Base Kustom-4-NumPad lcdFuncMap"
 PartialMaps[5]="Kustom-0-Base Kustom-1-Base Kustom-5-Fn lcdFuncMap"
 PartialMaps[6]="Kustom-0-Base Kustom-1-Base Kustom-6-Game lcdFuncMap"
+PartialMaps[7]="Kustom-0-Base Kustom-1-Base Kustom-7-MacFunc lcdFuncMap"
+# Uncomment these lines if you want to brick the thing...
+#PartialMaps[8]="Kustom-0-Base Kustom-1-Base Kustom-8-WinFunc lcdFuncMap"
+#PartialMaps[9]="Kustom-0-Base Kustom-1-Base Kustom-9-WinEdit lcdFuncMap"
+
 
 ##########################
 # Advanced Configuration #
