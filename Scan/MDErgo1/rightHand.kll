@@ -35,7 +35,7 @@ S0x1A : U"Quote";
 
 # Top Thumb Cluster
 S0x1B : U"Lock1";
-S0x1C : U"App";
+S0x1C : U"RCtrl";
 
 # Bottom-Middle Row
 S0x1D : U"Equals";
@@ -44,7 +44,7 @@ S0x1F : U"M";
 S0x20 : U"Comma";
 S0x21 : U"Period";
 S0x22 : U"Slash";
-S0x23 : U"Right Shift";
+S0x23 : U"RShift";
 
 # Bottom Thumb Cluster
 S0x24 : U"Home";
@@ -57,4 +57,7 @@ S0x28 : U"Left";
 S0x29 : U"Up";
 S0x2A : U"Down";
 S0x2B : U"Right";
-S0x2C : U"Lock7";
+S0x2C : U"RGui";
+# If I don't put this here, I have problems
+# remapping RGui :/
+S0x2D : U"ScrollLock";

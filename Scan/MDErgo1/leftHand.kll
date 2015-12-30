@@ -58,3 +58,7 @@ S0x29 : U"Lock4";
 S0x2A : U"LAlt";
 S0x2B : U"LGui";
 S0x2C : U"LCtrl";
+# I don't know if this is true for the left layer
+# but for the right layer, the last entry doesn't
+# like to be remapped, so I put it here for consistency
+S0x2D : U"ScrollLock";
