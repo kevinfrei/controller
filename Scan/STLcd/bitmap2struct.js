@@ -1,26 +1,34 @@
 #!/usr/bin/env node
-// To use this, you'll need to type 'npm install' to get the jimp module downloaded
+// To use this, you'll need to type 'npm install'
+// to get the jimp & minimist modules downloaded
 'use strict';
 
 var error = false;
 var jimp = require('jimp');
 var argv = require('minimist')(process.argv.slice(2), {
-  boolean: ['noscaling', 'square'],
-  alias: {s:'noscaling'},
+  boolean: ['noscaling', 'square', 'invert'],
+  alias: {s:'noscaling', q:'square', b:'background', i:'invert'},
+  string: 'background',
+  default: {background: '0xFFFFFFFF'},
   unknown: function(a) {error = a[0] === '-';}
 });
 var maxHeight = 32;
 var maxWidth = 128; // Default
 if (error) {
   console.log("Usage:");
-  console.log(process.argv[1], " {-s|--noscaling} {--square} file(s)...");
-  console.log("--square results in a 32x32 bitmap, to use instead of numbers")
+  console.log(process.argv[1], " {options} file(s)...");
+  console.log("-s|--noscaling        Disable image scaling");
+  console.log("-q|--square           Spit out a 32x32 image (for use as numbers)");
+  console.log("-b|--background 0x... Set the background color of the image (quite necessary for PNG's)");
+  console.log("-i|--invert           Invert the pixels");
   process.exit(-1);
 }
 var scale = !argv.noscaling;
 if (argv.square) {
   maxWidth = maxHeight;
 }
+var background = parseInt(argv.background);
+var invert = !!argv.invert;
 var files = argv._;
 var count;
 
@@ -111,14 +119,17 @@ var graphic = function(inHeight, inWidth) {
 
 for (count = 0; count < files.length; count++) {
   jimp.read(files[count]).then(function (img) {
-    var newImage = new jimp(maxWidth, maxHeight, 0xFFFFFFFF);
+    if (invert) {
+      img.invert();
+    }
+    var newImage = new jimp(maxWidth, maxHeight, background);
     // Scale the image to fit
     var scaledInput = scale ?
-      img.background(0xFFFFFFFF).contain(maxWidth, maxHeight) : img;
+      img.background(background).contain(maxWidth, maxHeight) : img;
     var x = scaledInput.bitmap.width;
     var y = scaledInput.bitmap.height;
     if (x > maxWidth || y > maxHeight) {
-      console.log("Your image doesn't fit - try not using --no-scale");
+      console.log("Your image doesn't fit - try not using --noscaling");
       return;
     }
     // Center the image in the output image

@@ -58,6 +58,3 @@ S0x29 : U"Up";
 S0x2A : U"Down";
 S0x2B : U"Right";
 S0x2C : U"RGui";
-# If I don't put this here, I have problems
-# remapping RGui :/
-S0x2D : U"ScrollLock";
