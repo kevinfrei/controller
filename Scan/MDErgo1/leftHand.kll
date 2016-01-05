@@ -7,7 +7,7 @@ KLL = 0.3c;
 Date = 2015-08-06;
 
 
-# Top Row
+# Numbers Row
 S0x02 : U"Lock2";
 S0x03 : U"5";
 S0x04 : U"4";
@@ -16,8 +16,8 @@ S0x06 : U"2";
 S0x07 : U"1";
 S0x08 : U"Escape";
 
-# Top-Middle Row
-S0x0B : U"Left Brace";
+# QWERTY Row
+S0x0B : U"Lock5"; # U"Left Brace";
 S0x0C : U"T";
 S0x0D : U"R";
 S0x0E : U"E";
@@ -25,7 +25,7 @@ S0x0F : U"W";
 S0x10 : U"Q";
 S0x11 : U"Tab";
 
-# Middle Row
+# ASDF Row
 S0x15 : U"G";
 S0x16 : U"F";
 S0x17 : U"D";
@@ -37,7 +37,7 @@ S0x1A : U"CapsLock";
 S0x1B : U"Lock3";
 S0x1C : U"RAlt";
 
-# Bottom-Middle Row
+# ZXCV Row
 S0x1D : U"Backtick";
 S0x1E : U"B";
 S0x1F : U"V";
@@ -53,7 +53,7 @@ S0x26 : U"Delete";
 S0x27 : U"Backspace";
 
 # Bottom Row
-S0x28 : U"Lock5";
+S0x28 : U"Left Brace"; # U"Lock5";
 S0x29 : U"Lock4";
 S0x2A : U"LAlt";
 S0x2B : U"LGui";
