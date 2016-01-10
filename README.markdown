@@ -1,3 +1,10 @@
+Why do you want to use my fork? 1 reason: pure, unbridled awesomeness.
+This awesomeness exists in 2 primary places. The first is this: I've fixed a nasty bug that didn't allow more than 254 macros (if you want all my awesomeness, you should go get my kll stuff, too, to see why I have 254 macros). The second is that I have an updated (rewritten) version of bitmap2struct (I rewrote it in NodeJS, cuz I don't really do Python) that lets you create all sorts of cool, nifty icons instead of the goofy "I:C" and the numbers 0-9. As an example, I have a little ErgoDox icon as the base layer, and then I have a Left (and Right) ErgoDox icon as 1, the Start button as 2, the Apple icon as 3, and a number of other images that indicate at a glance what your keyboard is up to.
+
+I also have a work-around for a wacky bug that I haven't been able to track down related to the lower right button when you're using the left side as your master: it repeats indefinitely. VERY annoying! So I've added a couple of phantom locations to the base layers.
+
+Be warned: I modified base layers for my KLL, because I found it easier to deal with.
+
 The Kiibohd Controller
 ======================
 
