@@ -58,3 +58,8 @@ S0x29 : U"Left"; # U"Up";
 S0x2A : U"Up"; # U"Down";
 S0x2B : U"Down"; # U"Right";
 S0x2C : U"Right"; # U"RGui";
+
+# Work around for annoying repeating key problem.
+# If I really cared, I'd debug the problem,
+# but I have better things to do with my time
+S0x2D : U"F1";

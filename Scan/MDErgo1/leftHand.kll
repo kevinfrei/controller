@@ -58,3 +58,8 @@ S0x29 : U"Lock4";
 S0x2A : U"LAlt";
 S0x2B : U"LGui";
 S0x2C : U"LCtrl";
+
+# Work around for annoying repeating key problem.
+# If I really cared, I'd debug the problem,
+# but I have better things to do with my time
+S0x2D : U"F2";
