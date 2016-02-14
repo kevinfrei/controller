@@ -46,7 +46,7 @@ Supported Microcontrollers
 * Teensy 2.0 (Partial)
 * Teensy 2.0++
 * Teensy 3.0
-* Teensy 3.1
+* Teensy 3.1/3.2
 * mk20dx128vlf5
 * mk20dx256vlh7
 
@@ -91,6 +91,7 @@ Contact
 If you really need to get a hold of HaaTa, email is best: `haata@kiibohd.com`
 
 IRC is likely faster though.
+`#input.club@irc.freenode.net`
 `#geekhack@irc.freenode.net`
 `#deskthority@irc.freenode.net`
 
