@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 by Jacob Alexander
+/* Copyright (C) 2013-2016 by Jacob Alexander
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,6 +56,14 @@ typedef enum USBKeyChangeState {
 	USBKeyChangeState_All           = 0x7F,
 } USBKeyChangeState;
 
+// Allows for selective USB descriptor pushes
+// However, in most cases everything is updated for each packet push
+typedef enum USBMouseChangeState {
+	USBMouseChangeState_None     = 0x00,
+	USBMouseChangeState_Buttons  = 0x01,
+	USBMouseChangeState_Relative = 0x02,
+} USBMouseChangeState;
+
 
 
 // ----- Variables -----
@@ -72,15 +80,22 @@ extern          uint16_t USBKeys_ConsCtrl; // 1KRO container for Consumer Contro
 
 extern volatile uint8_t  USBKeys_Protocol; // 0 - Boot Mode, 1 - NKRO Mode
 
+extern volatile uint16_t USBMouse_Buttons; // Bitmask for mouse buttons
+extern volatile uint16_t USBMouse_Relative_x;
+extern volatile uint16_t USBMouse_Relative_y;
+
 // Misc variables (XXX Some are only properly utilized using AVR)
 extern          uint8_t  USBKeys_Idle_Config;
 extern          uint8_t  USBKeys_Idle_Count;
 
-extern USBKeyChangeState USBKeys_Changed;
+extern USBKeyChangeState   USBKeys_Changed;
+extern USBMouseChangeState USBMouse_Changed;
 
 extern volatile uint8_t  Output_Available; // 0 - Output module not fully functional, 1 - Output module working
 
 extern          uint8_t  Output_DebugMode; // 0 - Debug disabled, 1 - Debug enabled
+
+extern          uint16_t Output_ExtCurrent_Available; // mA - Set by outside module if not using USB (i.e. Interconnect)
 
 
 
@@ -96,6 +111,12 @@ void Output_softReset();
 
 // Relies on USB serial module
 unsigned int Output_availablechar();
+
+// Returns the total mA available (total, if used in a chain, each device will have to use a slice of it)
+unsigned int Output_current_available();
+
+void Output_update_external_current( unsigned int current );
+void Output_update_usb_current( unsigned int current );
 
 int Output_getchar();
 int Output_putchar( char c );

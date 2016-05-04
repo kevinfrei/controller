@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2015 by Jacob Alexander
+/* Copyright (C) 2014-2016 by Jacob Alexander
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 #include <led.h>
 #include <print.h>
 #include <macro.h>
+#include <Lib/delay.h>
 
 // Local Includes
 #include "matrix_scan.h"
@@ -51,6 +52,7 @@ nat_ptr_t Matrix_divCounter = 0;
 
 // CLI Functions
 void cliFunc_matrixDebug( char* args );
+void cliFunc_matrixInfo( char* args );
 void cliFunc_matrixState( char* args );
 
 
@@ -59,10 +61,12 @@ void cliFunc_matrixState( char* args );
 
 // Scan Module command dictionary
 CLIDict_Entry( matrixDebug,  "Enables matrix debug mode, prints out each scan code." NL "\t\tIf argument \033[35mT\033[0m is given, prints out each scan code state transition." );
+CLIDict_Entry( matrixInfo,   "Print info about the configured matrix." );
 CLIDict_Entry( matrixState,  "Prints out the current scan table N times." NL "\t\t \033[1mO\033[0m - Off, \033[1;33mP\033[0m - Press, \033[1;32mH\033[0m - Hold, \033[1;35mR\033[0m - Release, \033[1;31mI\033[0m - Invalid" );
 
 CLIDict_Def( matrixCLIDict, "Matrix Module Commands" ) = {
 	CLIDict_Item( matrixDebug ),
+	CLIDict_Item( matrixInfo ),
 	CLIDict_Item( matrixState ),
 	{ 0, 0, 0 } // Null entry for dictionary end
 };
@@ -110,7 +114,9 @@ uint8_t Matrix_pin( GPIO_Pin gpio, Type type )
 	// Assumes 0x40 between GPIO Port registers and 0x1000 between PORT pin registers
 	// See Lib/mk20dx.h
 	volatile unsigned int *GPIO_PDDR = (unsigned int*)(&GPIOA_PDDR) + gpio_offset;
+	#ifndef GHOSTING_MATRIX
 	volatile unsigned int *GPIO_PSOR = (unsigned int*)(&GPIOA_PSOR) + gpio_offset;
+	#endif
 	volatile unsigned int *GPIO_PCOR = (unsigned int*)(&GPIOA_PCOR) + gpio_offset;
 	volatile unsigned int *GPIO_PDIR = (unsigned int*)(&GPIOA_PDIR) + gpio_offset;
 	volatile unsigned int *PORT_PCR  = (unsigned int*)(&PORTA_PCR0) + port_offset;
@@ -119,23 +125,30 @@ uint8_t Matrix_pin( GPIO_Pin gpio, Type type )
 	switch ( type )
 	{
 	case Type_StrobeOn:
-		*GPIO_PSOR |= (1 << gpio.pin);
 		#ifdef GHOSTING_MATRIX
-		*GPIO_PDDR |= (1 << gpio.pin);  // output
+		*GPIO_PCOR |= (1 << gpio.pin);
+		*GPIO_PDDR |= (1 << gpio.pin);  // output, low
+		#else
+		*GPIO_PSOR |= (1 << gpio.pin);
 		#endif
 		break;
 
 	case Type_StrobeOff:
-		*GPIO_PCOR |= (1 << gpio.pin);
 		#ifdef GHOSTING_MATRIX
 		// Ghosting martix needs to put not used (off) strobes in high impedance state
 		*GPIO_PDDR &= ~(1 << gpio.pin);  // input, high Z state
 		#endif
+		*GPIO_PCOR |= (1 << gpio.pin);
 		break;
 
 	case Type_StrobeSetup:
+		#ifdef GHOSTING_MATRIX
+		*GPIO_PDDR &= ~(1 << gpio.pin);  // input, high Z state
+		*GPIO_PCOR |= (1 << gpio.pin);
+		#else
 		// Set as output pin
 		*GPIO_PDDR |= (1 << gpio.pin);
+		#endif
 
 		// Configure pin with slow slew, high drive strength and GPIO mux
 		*PORT_PCR = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
@@ -154,7 +167,11 @@ uint8_t Matrix_pin( GPIO_Pin gpio, Type type )
 		break;
 
 	case Type_Sense:
+		#ifdef GHOSTING_MATRIX  // inverted
+		return *GPIO_PDIR & (1 << gpio.pin) ? 0 : 1;
+		#else
 		return *GPIO_PDIR & (1 << gpio.pin) ? 1 : 0;
+		#endif
 
 	case Type_SenseSetup:
 		// Set as input pin
@@ -190,29 +207,17 @@ void Matrix_setup()
 	// Register Matrix CLI dictionary
 	CLI_registerDictionary( matrixCLIDict, matrixCLIDictName );
 
-	info_msg("Columns:  ");
-	printHex( Matrix_colsNum );
-
 	// Setup Strobe Pins
 	for ( uint8_t pin = 0; pin < Matrix_colsNum; pin++ )
 	{
 		Matrix_pin( Matrix_cols[ pin ], Type_StrobeSetup );
 	}
 
-	print( NL );
-	info_msg("Rows:     ");
-	printHex( Matrix_rowsNum );
-
 	// Setup Sense Pins
 	for ( uint8_t pin = 0; pin < Matrix_rowsNum; pin++ )
 	{
 		Matrix_pin( Matrix_rows[ pin ], Type_SenseSetup );
 	}
-
-	print( NL );
-	info_msg("Max Keys: ");
-	printHex( Matrix_maxKeys );
-	print( NL );
 
 	// Clear out Debounce Array
 	for ( uint8_t item = 0; item < Matrix_maxKeys; item++ )
@@ -294,8 +299,18 @@ void Matrix_scan( uint16_t scanNum )
 	// For each strobe, scan each of the sense pins
 	for ( uint8_t strobe = 0; strobe < Matrix_colsNum; strobe++ )
 	{
+		#ifdef STROBE_DELAY
+		uint32_t start = micros();
+		while ((micros() - start) < STROBE_DELAY);
+		#endif
+
 		// Strobe Pin
 		Matrix_pin( Matrix_cols[ strobe ], Type_StrobeOn );
+
+		#ifdef STROBE_DELAY
+		start = micros();
+		while ((micros() - start) < STROBE_DELAY);
+		#endif
 
 		// Scan each of the sense pins
 		for ( uint8_t sense = 0; sense < Matrix_rowsNum; sense++ )
@@ -428,7 +443,7 @@ void Matrix_scan( uint16_t scanNum )
 
 
 	// Matrix ghosting check and elimination
-	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 #ifdef GHOSTING_MATRIX
 	// strobe = column, sense = row
 
@@ -465,7 +480,7 @@ void Matrix_scan( uint16_t scanNum )
 		row_use[row] = used;
 		row_ghost[row] = 0;  // clear
 	}
-	
+
 	// Check if matrix has ghost
 	// Happens when key is pressed and some other key is pressed in same row and another in same column
 	//print("  G ");
@@ -494,10 +509,10 @@ void Matrix_scan( uint16_t scanNum )
 			uint8_t key = Matrix_colsNum * row + col;
 			KeyState *state = &Matrix_scanArray[ key ];
 			KeyGhost *st = &Matrix_ghostArray[ key ];
-			
+
 			// col or row is ghosting (crossed)
 			uint8_t ghost = (col_ghost[col] > 0 || row_ghost[row] > 0) ? 1 : 0;
-			
+
 			st->prev = st->cur;  // previous
 			// save state if no ghost or outside ghosted area
 			if ( ghost == 0 )
@@ -505,20 +520,16 @@ void Matrix_scan( uint16_t scanNum )
 			// final
 			// use saved state if ghosting, or current if not
 			st->cur = ghost > 0 ? st->saved : state->curState;
-			
+
 			//  Send keystate to macro module
-			KeyPosition k = !st->cur 
+			KeyPosition k = !st->cur
 				? (!st->prev ? KeyState_Off : KeyState_Release)
 				: ( st->prev ? KeyState_Hold : KeyState_Press);
-			//if (!st->cur && !st->prev)  k = KeyState_Off; else
-			//if ( st->cur &&  st->prev)  k = KeyState_Hold; else
-			//if ( st->cur && !st->prev)  k = KeyState_Press; else
-			//if (!st->cur &&  st->prev)  k = KeyState_Release;
 			Macro_keyState( key, k );
 		}
 	}
 #endif
-	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+	// . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
 	// State Table Output Debug
@@ -567,9 +578,33 @@ void Matrix_scan( uint16_t scanNum )
 }
 
 
+// Called by parent scan module whenever the available current changes
+// current - mA
+void Matrix_currentChange( unsigned int current )
+{
+	// TODO - Any potential power savings?
+}
+
+
+
 // ----- CLI Command Functions -----
 
-void cliFunc_matrixDebug ( char* args )
+void cliFunc_matrixInfo( char* args )
+{
+	print( NL );
+	info_msg("Columns:  ");
+	printHex( Matrix_colsNum );
+
+	print( NL );
+	info_msg("Rows:     ");
+	printHex( Matrix_rowsNum );
+
+	print( NL );
+	info_msg("Max Keys: ");
+	printHex( Matrix_maxKeys );
+}
+
+void cliFunc_matrixDebug( char* args )
 {
 	// Parse number from argument
 	//  NOTE: Only first argument is used
@@ -603,7 +638,7 @@ void cliFunc_matrixDebug ( char* args )
 	printInt8( matrixDebugMode );
 }
 
-void cliFunc_matrixState ( char* args )
+void cliFunc_matrixState( char* args )
 {
 	// Parse number from argument
 	//  NOTE: Only first argument is used
