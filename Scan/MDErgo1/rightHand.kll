@@ -17,7 +17,7 @@ S0x07 : U"0";
 S0x08 : U"Minus";
 
 # QWERTY Row
-S0x0B : U"RGui"; # U"Right Brace";
+S0x0B : U"RGui";
 S0x0C : U"Y";
 S0x0D : U"U";
 S0x0E : U"I";
@@ -53,13 +53,13 @@ S0x26 : U"Enter";
 S0x27 : U"Space";
 
 # Bottom Row
-S0x28 : U"Right Brace"; # U"Left";
-S0x29 : U"Left"; # U"Up";
-S0x2A : U"Up"; # U"Down";
-S0x2B : U"Down"; # U"Right";
-S0x2C : U"Right"; # U"RGui";
+S0x28 : U"Right Brace";
+S0x29 : U"Left";
+S0x2A : U"Up";
+S0x2B : U"Down";
+S0x2C : U"Right";
 
 # Work around for annoying repeating key problem.
 # If I really cared, I'd debug the problem,
-# but I have better things to do with my time
+# but this seems to work, so wtf...
 S0x2D : U"F1";
