@@ -14,14 +14,21 @@ The [KLL](https://github.com/kiibohd/kll) git repo is automatically cloned durin
 
 Please refer to the [KLL](https://github.com/kiibohd/kll) repo or [kiibohd.com](http://kiibohd.com) for details on the KLL (Keyboard Layout Language) Spec.
 
+[![Travis Status](https://travis-ci.org/kiibohd/controller.svg?branch=master)](https://travis-ci.org/kiibohd/controller) [![Appveyor Status](https://ci.appveyor.com/api/projects/status/erfnnhlm3w5sinr3/branch/master?svg=true)](https://ci.appveyor.com/project/haata/controller/branch/master)
+
+
+[![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.net/input.club.png)](https://kiwiirc.com/client/irc.freenode.net/#input.club)
+
 
 
 Official Keyboards
 ------------------
 
-* MD1      (Infinity Keyboard/IC60 2014/10/15)
-* MDErgo1  (Infinity Ergodox /ICED 2015/03/31)
-* WhiteFox (Soon to be released?)
+* Infinity 60%
+* Infinity 60% LED
+* Infinity Ergodox
+* WhiteFox
+* K-Type (coming soon)
 
 
 The Kiibohd firmware supports a lot of other keyboards, but these are more obscure/custom/lesser known.
@@ -89,9 +96,3 @@ Contact
 -------
 
 If you really need to get a hold of HaaTa, email is best: `haata@kiibohd.com`
-
-IRC is likely faster though.
-`#input.club@irc.freenode.net`
-`#geekhack@irc.freenode.net`
-`#deskthority@irc.freenode.net`
-

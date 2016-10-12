@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This is a build script template
 # These build scripts are just a convenience for configuring your keyboard (less daunting than CMake)
-# Jacob Alexander 2015
+# Jacob Alexander 2015-2016
 
 
 
@@ -18,7 +18,7 @@ BuildPath="HomeLeft"
 ## KLL Configuration ##
 
 # Generally shouldn't be changed, this will affect every layer
-BaseMap="defaultMap leftHand slave1 rightHand"
+BaseMap="scancode_map leftHand slave1 rightHand"
 
 # This is the default layer of the keyboard
 # NOTE: To combine kll files into a single layout, separate them by spaces
@@ -52,7 +52,7 @@ PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-home-left"
 # NOTE: Changing any of these variables will require a force build to compile correctly
 
 # Keyboard Module Configuration
-ScanModule="MDErgo1"
+ScanModule="Infinity_Ergodox"
 MacroModule="PartialMap"
 OutputModule="pjrcUSB"
 DebugModule="full"

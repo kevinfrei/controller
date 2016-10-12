@@ -29,6 +29,9 @@
  * SOFTWARE.
  */
 
+#include <kll_defs.h>
+#if enableMouse_define == 1
+
 // ----- Includes -----
 
 // Compiler Includes
@@ -163,6 +166,12 @@ void usb_mouse_send()
 		{
 			transmit_previous_timeout = 1;
 			warn_print("USB Transmit Timeout...");
+
+                        // Clear status and state
+                        USBMouse_Buttons = 0;
+                        USBMouse_Relative_x = 0;
+                        USBMouse_Relative_y = 0;
+                        USBMouse_Changed = 0;
 			return;
 		}
 		yield();
@@ -293,4 +302,6 @@ void usb_mouse_screen_size(uint16_t width, uint16_t height, uint8_t mac)
 		usb_mouse_scale_y = (1825361101ul + (height >> 1)) / height;
 	}
 }
+
+#endif
 
