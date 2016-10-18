@@ -47,8 +47,8 @@ S0x22 : U"Z";
 S0x23 : U"LShift";
 
 # Bottom Thumb Cluster
-S0x24 : U"PageUp";
-S0x25 : U"PageDown";
+S0x24 : U"Home";
+S0x25 : U"End";
 S0x26 : U"Delete";
 S0x27 : U"Backspace";
 

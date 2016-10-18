@@ -185,7 +185,7 @@ BaseMap="defaultMap rightHand slave1 leftHand"
 # NOTE: To combine kll files into a single layout, separate them by spaces
 # e.g.  DefaultMap="mylayout mylayoutmod"
 #DefaulMap="mdergo1Overlay lcdFuncMap"
-DefaultMap="Kustom-0-Base lcdFuncMap-work-left"
+DefaultMap="Kustom-0-Base lcdFuncMap-work-right"
 
 # This is where you set the additional layers
 # NOTE: Indexing starts at 1
@@ -193,15 +193,15 @@ DefaultMap="Kustom-0-Base lcdFuncMap-work-left"
 # e.g.  PartialMaps[1]="layer1 layer1mod"
 #       PartialMaps[2]="layer2"
 #       PartialMaps[3]="layer3"
-PartialMaps[1]="Kustom-1-Base lcdFuncMap-work-left"
-PartialMaps[2]="Kustom-2-Mac lcdFuncMap-work-left"
-PartialMaps[3]="Kustom-3-Win lcdFuncMap-work-left"
-PartialMaps[4]="Kustom-4-NumPad lcdFuncMap-work-left"
-PartialMaps[5]="Kustom-5-Fn lcdFuncMap-work-left"
-PartialMaps[6]="Kustom-6-Game lcdFuncMap-work-left"
-PartialMaps[7]="Kustom-7-MacFunc lcdFuncMap-work-left"
-PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-work-left"
-PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-work-left"
+PartialMaps[1]="Kustom-1-Base lcdFuncMap-work-right"
+PartialMaps[2]="Kustom-2-Mac lcdFuncMap-work-right"
+PartialMaps[3]="Kustom-3-Win lcdFuncMap-work-right"
+PartialMaps[4]="Kustom-4-NumPad lcdFuncMap-work-right"
+PartialMaps[5]="Kustom-5-Fn lcdFuncMap-work-right"
+PartialMaps[6]="Kustom-6-Game lcdFuncMap-work-right"
+PartialMaps[7]="Kustom-7-MacFunc lcdFuncMap-work-right"
+PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-work-right"
+PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-work-right"
 
 # Load the library (starts the build)
 source cmake.bash

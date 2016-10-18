@@ -47,8 +47,8 @@ S0x22 : U"Slash";
 S0x23 : U"RShift";
 
 # Bottom Thumb Cluster
-S0x24 : U"Home";
-S0x25 : U"End";
+S0x24 : U"PageUp";
+S0x25 : U"PageDown";
 S0x26 : U"Enter";
 S0x27 : U"Space";
 
