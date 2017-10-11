@@ -99,7 +99,7 @@ inline uint8_t Scan_loop()
 	LED_scan();
 
 	// Check if we are ready roll ovr the strobe position
-	if ( Scan_strobe_position >= Matrix_totalColumns() - 1 )
+	if ( Scan_strobe_position >= Matrix_totalColumns() )
 	{
 		Scan_strobe_position = 0;
 		Scan_scanCount++;
@@ -136,11 +136,5 @@ void Scan_currentChange( unsigned int current )
 	Connect_currentChange( current );
 	Matrix_currentChange( current );
 	LED_currentChange( current );
-
-	if ( current == 500 )
-	{
-		// TODO REMOVEME once default animations can be set
-		Pixel_addDefaultAnimation( Animation__rainbow_wave );
-	}
 }
 

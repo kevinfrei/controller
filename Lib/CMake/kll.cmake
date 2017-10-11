@@ -1,6 +1,6 @@
 ###| CMAKE Kiibohd Controller KLL Configurator |###
 #
-# Written by Jacob Alexander in 2014-2016 for the Kiibohd Controller
+# Written by Jacob Alexander in 2014-2017 for the Kiibohd Controller
 #
 # Released into the Public Domain
 #
@@ -33,7 +33,7 @@ endif ()
 # KLL Installation (Make sure repo has been cloned)
 #
 
-if ( NOT EXISTS "${PROJECT_SOURCE_DIR}/kll/kll.py" )
+if ( NOT EXISTS "${PROJECT_SOURCE_DIR}/kll/kll" )
 	message ( STATUS "Downloading latest kll version:" )
 
 	# Make sure git is available
@@ -174,11 +174,24 @@ set ( kll_cmd
 	--def-output ${kll_defs}
 	--map-output ${kll_keymap}
 	--pixel-output ${kll_pixelmap}
-	#--operation-organization-display
-	#--data-organization-display
-	#--data-finalization-debug
-	#--data-finalization-display
-	#--data-analysis-debug
+)
+
+set ( kll_cmd_debug_options
+	--operation-organization-debug
+	--data-organization-debug
+	--data-finalization-debug
+	--data-analysis-debug
+)
+
+set ( kll_cmd_display_options
+	--operation-organization-display
+	--data-organization-display
+	--data-finalization-display
+	--data-analysis-display
+)
+
+set ( kll_cmd_final_display_options
+	--data-analysis-display
 )
 
 add_custom_command ( OUTPUT ${kll_outputname}
@@ -193,6 +206,41 @@ add_custom_target ( kll_regen
 	COMMAND ${kll_version_cmd}
 	COMMAND ${kll_cmd}
 	COMMENT "Re-generating KLL Layout"
+)
+
+#| KLL Regen Debug Target
+add_custom_target ( kll_debug
+	COMMAND ${kll_version_cmd}
+	COMMAND ${kll_cmd} ${kll_cmd_debug_options}
+	COMMENT "Re-generating KLL Layout in Debug Mode"
+)
+
+#| KLL Regen Display Target
+add_custom_target ( kll_display
+	COMMAND ${kll_version_cmd}
+	COMMAND ${kll_cmd} ${kll_cmd_display_options}
+	COMMENT "Re-generating KLL Layout in Display Mode"
+)
+
+#| KLL Regen Final Display Target
+add_custom_target ( kll_final_display
+	COMMAND ${kll_version_cmd}
+	COMMAND ${kll_cmd} ${kll_cmd_final_display_options}
+	COMMENT "Re-generating KLL Layout in Final Display Mode"
+)
+
+#| KLL Regen Token Debug
+add_custom_target ( kll_token
+	COMMAND ${kll_version_cmd}
+	COMMAND ${kll_cmd} --token-debug
+	COMMENT "Re-generating KLL Layout in Token Debug Mode"
+)
+
+#| KLL Regen Parser Debug
+add_custom_target ( kll_parser
+	COMMAND ${kll_version_cmd}
+	COMMAND ${kll_cmd} --parser-debug --parser-token-debug
+	COMMENT "Re-generating KLL Layout in Parser Debug Mode"
 )
 
 #| Append generated file to required sources so it becomes a dependency in the main build

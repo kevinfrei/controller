@@ -1,7 +1,7 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
  * Copyright (c) 2013 PJRC.COM, LLC.
- * Modified by Jacob Alexander 2014-2016
+ * Modified by Jacob Alexander 2014-2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -51,6 +51,8 @@
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
+
+#define NOP() do {} while ( 0 )
 
 
 
@@ -717,6 +719,8 @@
 #define WDOG_WINH               *(volatile uint16_t *)0x40052008 // Watchdog Window Register High
 #define WDOG_WINL               *(volatile uint16_t *)0x4005200A // Watchdog Window Register Low
 #define WDOG_REFRESH            *(volatile uint16_t *)0x4005200C // Watchdog Refresh register
+#define WDOG_REFRESH_SEQ1               (uint16_t)0xA602
+#define WDOG_REFRESH_SEQ2               (uint16_t)0xB480
 #define WDOG_UNLOCK             *(volatile uint16_t *)0x4005200E // Watchdog Unlock register
 #define WDOG_UNLOCK_SEQ1                (uint16_t)0xC520
 #define WDOG_UNLOCK_SEQ2                (uint16_t)0xD928
@@ -2015,6 +2019,8 @@ typedef struct {
 
 // Other
 #define VBAT                    *(volatile uint8_t *)0x4003E000 // Register available in all power states
+#define VBAT_SECURE1            *(volatile uint32_t *)0x4003E018 // Kiibohd Secure 32 bit register 1 (24th byte)
+#define VBAT_SECURE2            *(volatile uint32_t *)0x4003E01C // Kiibohd Secure 32 bit register 2 (28th byte)
 
 
 

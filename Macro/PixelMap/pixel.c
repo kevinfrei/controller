@@ -63,12 +63,6 @@ typedef enum PixelTest {
 	PixelTest_XY_Roll,
 } PixelTest;
 
-typedef enum AnimationControl {
-	AnimationControl_Forward = 0, // Default
-	AnimationControl_ForwardOne,
-	AnimationControl_Pause,
-} AnimationControl;
-
 
 
 // ----- Variables -----
@@ -131,6 +125,8 @@ uint8_t Pixel_animationProcess( AnimationStackElement *elem );
 uint8_t Pixel_addAnimation( AnimationStackElement *element );
 uint8_t Pixel_determineLastTriggerScanCode( TriggerMacro *trigger );
 
+void Pixel_pixelSet( PixelElement *elem, uint32_t value );
+
 PixelBuf *Pixel_bufferMap( uint16_t channel );
 
 AnimationStackElement *Pixel_lookupAnimation( uint16_t index, uint16_t prev );
@@ -155,6 +151,16 @@ void Pixel_AnimationIndex_capability( TriggerMacro *trigger, uint8_t state, uint
 
 	// Lookup animation settings
 	uint16_t index = *(uint16_t*)(&args[0]);
+
+	// Check if a valid setting
+	if ( index >= Pixel_AnimationSettingsNum_KLL )
+	{
+		warn_msg("Invalid AnimationSetting index: ");
+		printInt16( index );
+		print( NL );
+		return;
+	}
+
 	AnimationStackElement element = Pixel_AnimationSettings[ index ];
 	element.trigger = trigger;
 
@@ -166,7 +172,7 @@ void Pixel_Animation_capability( TriggerMacro *trigger, uint8_t state, uint8_t s
 	// Display capability name
 	if ( stateType == 0xFF && state == 0xFF )
 	{
-		print("Pixel_Animation_capability(index,loops,pfunc,divmask,divshift,replace)");
+		print("Pixel_Animation_capability(index,loops,pfunc,framedelay,frameoption,replace)");
 		return;
 	}
 
@@ -178,11 +184,12 @@ void Pixel_Animation_capability( TriggerMacro *trigger, uint8_t state, uint8_t s
 	AnimationStackElement element;
 	element.trigger = trigger;
 	element.pos = 0; // TODO (HaaTa) Start at specific frame
+	element.subpos = 0;
 	element.index = *(uint16_t*)(&args[0]);
 	element.loops = *(uint8_t*)(&args[2]);
 	element.pfunc = *(uint8_t*)(&args[3]);
-	element.divmask = *(uint8_t*)(&args[4]);
-	element.divshift = *(uint8_t*)(&args[5]);
+	element.framedelay = *(uint8_t*)(&args[4]);
+	element.frameoption = *(uint8_t*)(&args[5]);
 	element.replace = *(uint8_t*)(&args[6]);
 
 	Pixel_addAnimation( &element );
@@ -231,6 +238,7 @@ void Pixel_AnimationControl_capability( TriggerMacro *trigger, uint8_t state, ui
 			Pixel_animationControl = AnimationControl_Pause;
 			break;
 		case AnimationControl_Pause:
+		default:
 			Pixel_animationControl = AnimationControl_Forward;
 			break;
 		}
@@ -239,6 +247,18 @@ void Pixel_AnimationControl_capability( TriggerMacro *trigger, uint8_t state, ui
 		Pixel_animationControl = AnimationControl_ForwardOne;
 		break;
 	case 2: // Forward
+		Pixel_animationControl = AnimationControl_Forward;
+		break;
+	case 3: // Stop (clears all animations)
+		Pixel_animationControl = AnimationControl_Stop;
+		break;
+	case 4: // Reset (restarts animations)
+		Pixel_animationControl = AnimationControl_Reset;
+		break;
+	case 5: // Pauses animations and clears display
+		Pixel_animationControl = AnimationControl_WipePause;
+		break;
+	case 6: // Pauses animation
 		Pixel_animationControl = AnimationControl_Pause;
 		break;
 	}
@@ -277,6 +297,14 @@ void Pixel_pixelInterpolate( PixelElement *elem, uint8_t position, uint8_t inten
 // Returns 1 on success, 0 on failure to allocate
 uint8_t Pixel_addDefaultAnimation( uint32_t index )
 {
+	if ( index >= Pixel_AnimationSettingsNum_KLL )
+	{
+		warn_msg("Invalid AnimationSetting index: ");
+		printInt32( index );
+		print( NL );
+		return 0;
+	}
+
 	return Pixel_addAnimation( (AnimationStackElement*)&Pixel_AnimationSettings[ index ] );
 }
 
@@ -293,11 +321,12 @@ uint8_t Pixel_addAnimation( AnimationStackElement *element )
 		if ( found != NULL && ( found->trigger == element->trigger || element->replace == AnimationReplaceType_All ) )
 		{
 			found->pos = element->pos;
+			found->subpos = element->subpos;
 			found->loops = element->loops;
 			found->pfunc = element->pfunc;
 			found->ffunc = element->ffunc;
-			found->divmask = element->divmask;
-			found->divshift = element->divshift;
+			found->framedelay = element->framedelay;
+			found->frameoption = element->frameoption;
 			found->replace = element->replace;
 			found->state = element->state;
 			return 0;
@@ -379,6 +408,17 @@ void Pixel_clearAnimations()
 	for ( uint16_t pos = 0; pos < Pixel_AnimationStackSize; pos++ )
 	{
 		Pixel_AnimationElement_Stor[pos].index = 0xFFFF;
+	}
+}
+
+// Clears all pixels
+void Pixel_clearPixels()
+{
+	// Update all positions
+	for ( uint16_t px = 0; px < Pixel_TotalPixels_KLL; px++ )
+	{
+		// Unset pixel
+		Pixel_pixelSet( (PixelElement*)&Pixel_Mapping[ px ], 0 );
 	}
 }
 
@@ -1169,15 +1209,16 @@ next:
 // -- Frame Tweening --
 
 // Standard Pixel Frame Function (no additional processing)
-void Pixel_frameTweenStandard( uint16_t frame, uint8_t subframe, const uint8_t *data, AnimationStackElement *elem )
+void Pixel_frameTweenStandard( const uint8_t *data, AnimationStackElement *elem )
 {
-	// Increment frame position
-	elem->pos++;
-
 	// Do nothing during sub-frames, skip
-	if ( subframe != 0 )
+	if ( elem->subpos != 0 )
 	{
-		return;
+		// But only if frame strech isn't set
+		if ( !( elem->frameoption & PixelFrameOption_FrameStretch ) )
+		{
+			return;
+		}
 	}
 
 	// Lookup Pixel Tweening Function
@@ -1197,7 +1238,7 @@ void Pixel_frameTweenStandard( uint16_t frame, uint8_t subframe, const uint8_t *
 
 // Pixel Frame Interpolation Tweening
 // Do averaging between key frames
-void Pixel_frameTweenInterpolation( uint16_t frame, uint8_t subframe, const uint8_t *data, AnimationStackElement *elem )
+void Pixel_frameTweenInterpolation( const uint8_t *data, AnimationStackElement *elem )
 {
 	// TODO
 }
@@ -1236,15 +1277,9 @@ uint8_t Pixel_animationProcess( AnimationStackElement *elem )
 		break;
 	}
 
-	// Calculate sub-frame index
-	uint8_t subframe = elem->pos & elem->divmask;
-
-	// Calculate frame index
-	uint16_t frame = elem->pos >> elem->divshift;
-
 	// Lookup animation frame to make sure we have something to do
 	// TODO Make sure animation index exists -HaaTa
-	const uint8_t *data = Pixel_Animations[elem->index][frame];
+	const uint8_t *data = Pixel_Animations[elem->index][elem->pos];
 
 	// If there is no frame data, that means we either stop, or restart
 	if ( data == 0 )
@@ -1268,14 +1303,36 @@ uint8_t Pixel_animationProcess( AnimationStackElement *elem )
 	switch ( elem->ffunc )
 	{
 	case PixelFrameFunction_Interpolation:
-		Pixel_frameTweenInterpolation( frame, subframe, data, elem );
+		Pixel_frameTweenInterpolation( data, elem );
 		break;
 
 	// Generic, no additonal processing necessary
 	case PixelFrameFunction_Off:
 	case PixelFrameFunction_InterpolationKLL:
-		Pixel_frameTweenStandard( frame, subframe, data, elem );
+		Pixel_frameTweenStandard( data, elem );
 		break;
+	}
+
+	// Increment positions
+	// framedelay case
+	if ( elem->framedelay > 0 )
+	{
+		// Roll-over subpos for framedelay
+		if ( elem->subpos == elem->framedelay )
+		{
+			elem->subpos = 0;
+			elem->pos++;
+		}
+		// Increment subposition
+		else
+		{
+			elem->subpos++;
+		}
+	}
+	// Full-speed
+	else
+	{
+		elem->pos++;
 	}
 
 	return 1;
@@ -1354,10 +1411,10 @@ void Pixel_channelToggle( uint16_t channel )
 	}
 }
 
-// Debug function, used by cli only XXX
+// Set each of the channels to a specific value
 void Pixel_pixelSet( PixelElement *elem, uint32_t value )
 {
-	// Toggle each of the channels of the pixel
+	// Set each of the channels of the pixel
 	for ( uint8_t ch = 0; ch < elem->channels; ch++ )
 	{
 		Pixel_channelSet( elem->indices[ch], value );
@@ -1415,14 +1472,16 @@ void Pixel_updateUSBLEDs()
 	if ( !USBKeys_LEDs_Changed )
 		return;
 
+	/*
 	AnimationStackElement element;
 	element.trigger = 0;
 	element.pos = 0;
+	element.subpos = 0;
 	element.loops = 0;
 	element.pfunc = 0;
 	element.ffunc = 0;
-	element.divmask = 1;
-	element.divshift = 1;
+	element.framedelay = 1;
+	element.frameoption = 0;
 	element.replace = AnimationReplaceType_Basic;
 
 	// NumLock
@@ -1457,9 +1516,40 @@ void Pixel_updateUSBLEDs()
 	{
 		Pixel_delAnimation( scroll_index, 1 );
 	}
+	*/
 
 	USBKeys_LEDs_Changed = 0;
 #endif
+}
+
+// External Animation Control
+void Pixel_setAnimationControl( AnimationControl control )
+{
+	Pixel_animationControl = control;
+}
+
+// Starting Animation setup
+void Pixel_initializeStartAnimations()
+{
+	// Iterate over starting animations
+	for ( uint32_t index = 0; index < Pixel_AnimationSettingsNum_KLL; index++ )
+	{
+		// Check if a starting animation
+		if ( Pixel_AnimationSettings[ index ].state == AnimationPlayState_Start )
+		{
+			// Default animations are noted by the TriggerMacro *trigger pointer being set to 1
+			if ( (uintptr_t)(Pixel_AnimationSettings[ index ].trigger) == 1 )
+			{
+				// Start animation
+				if ( Pixel_addDefaultAnimation( index ) == 0 )
+				{
+					warn_msg("Failed to start starting animation index: ");
+					printInt32( index );
+					print( NL );
+				}
+			}
+		}
+	}
 }
 
 // Pixel Procesing Loop
@@ -1484,7 +1574,23 @@ inline void Pixel_process()
 	case AnimationControl_Forward:    // Ok
 	case AnimationControl_ForwardOne: // Ok + 1, then stop
 		Pixel_FrameState = FrameState_Update;
+		break;
+	case AnimationControl_Stop:       // Clear animations, then proceed forward
 		Pixel_FrameState = FrameState_Update;
+		Pixel_clearAnimations();
+		Pixel_clearPixels();
+		Pixel_animationControl = AnimationControl_Forward;
+		break;
+	case AnimationControl_Reset:      // Clear animations, then restart initial
+		Pixel_FrameState = FrameState_Update;
+		Pixel_clearAnimations();
+		Pixel_clearPixels();
+		Pixel_animationControl = AnimationControl_Forward;
+		// TODO - restart initial
+		break;
+	case AnimationControl_WipePause:  // Pauses animations, clears the display
+		Pixel_FrameState = FrameState_Pause;
+		Pixel_clearPixels();
 		break;
 	default: // Pause
 		Pixel_FrameState = FrameState_Pause;
@@ -1705,11 +1811,13 @@ inline void Pixel_setup()
 	Pixel_testMode = Pixel_Test_Mode_define;
 
 	// Clear animation stack
-	Pixel_AnimationStack.size = 0;
 	Pixel_clearAnimations();
 
 	// Set default animation control
 	Pixel_animationControl = AnimationControl_Forward;
+
+	// Add initial animations
+	Pixel_initializeStartAnimations();
 }
 
 
@@ -2154,10 +2262,10 @@ void cliFunc_aniStack( char* args )
 		printInt16( elem->pos );
 		print(") loops(");
 		printInt8( elem->loops );
-		print(") divmask(");
-		printInt8( elem->divmask );
-		print(") divshift(");
-		printInt8( elem->divshift );
+		print(") framedelay(");
+		printInt8( elem->framedelay );
+		print(") frameoption(");
+		printInt8( elem->frameoption );
 		print(") ffunc(");
 		printInt8( elem->ffunc );
 		print(") pfunc(");

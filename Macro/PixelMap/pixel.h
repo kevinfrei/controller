@@ -61,6 +61,12 @@ typedef enum PixelChange {
 	PixelChange_RightShift,       // >>
 } PixelChange;
 
+// Frame Options
+typedef enum PixelFrameOption {
+	PixelFrameOption_None         = 0, // No options set
+	PixelFrameOption_FrameStretch = 1, // During frame delay frames, re-run animation frame
+} PixelFrameOption;
+
 // Frame Function
 // - Frame transition function
 // - e.g. Interpolation between animation frames
@@ -105,10 +111,19 @@ typedef enum AnimationReplaceType {
 
 // Animation Play State
 typedef enum AnimationPlayState {
-	AnimationPlayState_Start = 0, // Start animation (default)
-	AnimationPlayState_Pause = 1, // Pause animation
+	AnimationPlayState_Start = 0, // Start animation
+	AnimationPlayState_Pause = 1, // Pause animation (default set by KLL Compiler)
 	AnimationPlayState_Stop  = 2, // Stop animation (removes animation state)
 } AnimationPlayState;
+
+typedef enum AnimationControl {
+	AnimationControl_Forward    = 0, // Default
+	AnimationControl_ForwardOne = 1,
+	AnimationControl_Pause      = 2, // Pauses current animations
+	AnimationControl_Stop       = 3, // Clears all animations, then sets forward
+	AnimationControl_Reset      = 4, // Clears all animations, starts initial animations (sets forward)
+	AnimationControl_WipePause  = 5, // Pauses animations, clears the display
+} AnimationControl;
 
 
 
@@ -166,23 +181,24 @@ typedef struct PixelModDataElement {
 
 // Animation stack element
 typedef struct AnimationStackElement {
-	TriggerMacro        *trigger;  // TriggerMacro that added element, set to 0 if unused
-	                               // If set to 1 in default settings, animation is enabled at start time
-	uint16_t             index;    // Animation id
-	uint16_t             pos;      // Current fundamental frame (XXX Make 32bit?)
-	uint8_t              loops;    // # of loops to run animation, 0 indicates infinite
-	uint8_t              divmask;  // # of process loops used for frame transition/hold (2,4,8,16,etc.)
-	                               //  Must be a contiguous mask
-	                               //  e.g.  0x00, 0x01, 0x03, 0x0F, etc.
-	                               //  *NOT* 0x02, 0x08, 0x24, etc.
-	uint8_t              divshift; // Matches divmask
-	                               //  Number of bits to shift until LSFB (least significant frame bit)
-	                               //  e.g.  0x03 => 2; 0x0F => 4
-	PixelFrameFunction   ffunc;    // Frame tweening function
-	PixelPixelFunction   pfunc;    // Pixel tweening function
+	TriggerMacro        *trigger;     // TriggerMacro that added element, set to 0 if unused
+	                                  // If set to 1 in default settings, animation is enabled at start time
+	uint16_t             index;       // Animation id
+	uint16_t             pos;         // Current fundamental frame (XXX Make 32bit?)
+	uint8_t              subpos;      // If framedelay is set, current delay position
+	                                  // Counts down up to framedelay.
+	uint8_t              loops;       // # of loops to run animation, 0 indicates infinite
+	uint8_t              framedelay;  // # of frames to delay the animation per frame of the animation
+	                                  // 0 - Full speed
+	                                  // 1 - Half speed
+	                                  // 2 - 1/3 speed
+	                                  // etc.
+	PixelFrameOption     frameoption; // Frame processing options
+	PixelFrameFunction   ffunc;       // Frame tweening function
+	PixelPixelFunction   pfunc;       // Pixel tweening function
 	// TODO ffunc and pfunc args
-	AnimationReplaceType replace;  // Replace type for stack element
-	AnimationPlayState   state;    // Animation state
+	AnimationReplaceType replace;     // Replace type for stack element
+	AnimationPlayState   state;       // Animation state
 } AnimationStackElement;
 
 // Animation stack
@@ -213,4 +229,6 @@ extern const uint16_t     Pixel_ScanCodeToPixel[];
 
 void Pixel_process();
 void Pixel_setup();
+
+void Pixel_setAnimationControl( AnimationControl control );
 

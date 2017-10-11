@@ -17,12 +17,9 @@ compiler:
 
 # Build Scripts
 env:
-  # Input Club Keyboard Tests
-  - DIR=Keyboards SCRIPT=infinity.bash
-  - DIR=Keyboards SCRIPT=infinity_led.bash
-  - DIR=Keyboards SCRIPT=ergodox.bash
-  - DIR=Keyboards SCRIPT=whitefox.bash
-  - DIR=Keyboards SCRIPT=k-type.bash
+  # Keyboard Tests
+  - DIR=Keyboards SCRIPT=ic_keyboards.bash # Input Club Keyboards
+  - DIR=Keyboards SCRIPT=others.bash
 
   # Debug Build Tests
   - DIR=Keyboards/Testing SCRIPT=uartout.bash
@@ -30,8 +27,7 @@ env:
   - DIR=Keyboards/Testing SCRIPT=macrotest.bash
 
   # Bootloader Build Tests
-  - DIR=Bootloader/Builds SCRIPT=mk20dx128vlf5.bash
-  - DIR=Bootloader/Builds SCRIPT=mk20dx256vlh7.bash
+  - DIR=Bootloader/Builds SCRIPT=all.bash
 
 # Exclusions
 matrix:
@@ -46,24 +42,13 @@ matrix:
   exclude:
     # Bootloader doesn't support clang yet
     - compiler: clang
-      env: DIR=Bootloader/Builds SCRIPT=mk20dx128vlf5.bash
-    - compiler: clang
-      env: DIR=Bootloader/Builds SCRIPT=mk20dx256vlh7.bash
+      env: DIR=Bootloader/Builds SCRIPT=all.bash
     # xcode *and* brew don't support clang ARMCCompiler for arm-none-eabi, sigh useless Apple
     - compiler: clang
-      env: DIR=Keyboards SCRIPT=infinity.bash
+      env: DIR=Keyboards SCRIPT=ic_keyboards.bash
       os: osx
     - compiler: clang
-      env: DIR=Keyboards SCRIPT=infinity_led.bash
-      os: osx
-    - compiler: clang
-      env: DIR=Keyboards SCRIPT=ergodox.bash
-      os: osx
-    - compiler: clang
-      env: DIR=Keyboards SCRIPT=whitefox.bash
-      os: osx
-    - compiler: clang
-      env: DIR=Keyboards SCRIPT=k-type.bash
+      env: DIR=Keyboards SCRIPT=others.bash
       os: osx
     - compiler: clang
       env: DIR=Keyboards/Testing SCRIPT=uartout.bash
@@ -75,10 +60,7 @@ matrix:
       env: DIR=Keyboards/Testing SCRIPT=macrotest.bash
       os: osx
     - compiler: clang
-      env: DIR=Bootloader/Builds SCRIPT=mk20dx128vlf5.bash
-      os: osx
-    - compiler: clang
-      env: DIR=Bootloader/Builds SCRIPT=mk20dx256vlh7.bash
+      env: DIR=Bootloader/Builds SCRIPT=all.bash
       os: osx
 
 # Package Setup

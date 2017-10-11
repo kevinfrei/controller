@@ -1,5 +1,5 @@
 /* Copyright (c) 2011,2012 Simon Schubert <2@0x2c.org>.
- * Modifications by Jacob Alexander 2014-2016 <haata@kiibohd.com>
+ * Modifications by Jacob Alexander 2014-2017 <haata@kiibohd.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,11 @@
 #include <delay.h>
 
 // Local Includes
+#include "weak.h"
 #include "mchck.h"
 #include "dfu.desc.h"
 
 #include "debug.h"
-
-#include "usb-internal.h"
 
 
 
@@ -36,6 +35,9 @@
  * Unfortunately we can't DMA directly to FlexRAM, so we'll have to stage here.
  */
 static char staging[ USB_DFU_TRANSFER_SIZE ];
+
+// DFU State
+static struct dfu_ctx dfu_ctx;
 
 
 
@@ -100,7 +102,7 @@ static enum dfu_status setup_read( size_t off, size_t *len, void **buf )
 		? (void*)(&_app_rom_end) - *buf + 1
 		: USB_DFU_TRANSFER_SIZE;
 
-	return (DFU_STATUS_OK);
+	return DFU_STATUS_OK;
 }
 
 static enum dfu_status setup_write( size_t off, size_t len, void **buf )
@@ -119,13 +121,19 @@ static enum dfu_status setup_write( size_t off, size_t len, void **buf )
 #endif
 
 	if ( len > sizeof(staging) )
-		return (DFU_STATUS_errADDRESS);
+	{
+		return DFU_STATUS_errADDRESS;
+	}
 
 	// We only allow the last write to be less than one sector size.
 	if ( off == 0 )
+	{
 		last = 0;
+	}
 	if ( last && len != 0 )
-		return (DFU_STATUS_errADDRESS);
+	{
+		return DFU_STATUS_errADDRESS;
+	}
 	if ( len != USB_DFU_TRANSFER_SIZE )
 	{
 		last = 1;
@@ -133,7 +141,7 @@ static enum dfu_status setup_write( size_t off, size_t len, void **buf )
 	}
 
 	*buf = staging;
-	return (DFU_STATUS_OK);
+	return DFU_STATUS_OK;
 }
 
 static enum dfu_status finish_write( void *buf, size_t off, size_t len )
@@ -142,15 +150,52 @@ static enum dfu_status finish_write( void *buf, size_t off, size_t len )
 
 	// If nothing left to flash, this is still ok
 	if ( len == 0 )
-		return (DFU_STATUS_OK);
+	{
+		return DFU_STATUS_OK;
+	}
+
+#if defined(_mk20dx256vlh7_)
+	if ( off == 0 && dfu_ctx.verified == DFU_VALIDATION_UNKNOWN )
+	{
+		// Reset offset
+		dfu_ctx.off = 0;
+
+		// First block, if using Chip_validation, skip flashing this block and use for key validation
+		// When key disabled, we supported a key'd file OR a non-key'd file
+		switch ( Chip_validation( (uint8_t*)buf ) )
+		{
+		// Key disabled, no key
+		case 0:
+			dfu_ctx.verified = DFU_VALIDATION_OK;
+			break;
+
+		// Invalid key
+		case -1:
+			dfu_ctx.verified = DFU_VALIDATION_FAILED;
+			return DFU_STATUS_errFILE;
+
+		// Valid key, or Key disabled and a key.
+		default:
+			dfu_ctx.verified = DFU_VALIDATION_PENDING;
+			print( "Valid firmware key" NL );
+
+			// Do not use this block
+			return DFU_STATUS_OK;
+		}
+	}
+#endif
 
 	// If the binary is larger than the internal flash, error
 	if ( off + (uintptr_t)&_app_rom + len > (uintptr_t)&_app_rom_end )
-		return (DFU_STATUS_errADDRESS);
+	{
+		return DFU_STATUS_errADDRESS;
+	}
 
 	target = flash_get_staging_area( off + (uintptr_t)&_app_rom, USB_DFU_TRANSFER_SIZE );
 	if ( !target )
-		return (DFU_STATUS_errADDRESS);
+	{
+		return DFU_STATUS_errADDRESS;
+	}
 	memcpy( target, buf, len );
 
 	// Depending on the error return a different status
@@ -160,61 +205,97 @@ static enum dfu_status finish_write( void *buf, size_t off, size_t len )
 	case FTFL_FSTAT_RDCOLERR: // Flash Read Collision Error
 	case FTFL_FSTAT_ACCERR:   // Flash Access Error
 	case FTFL_FSTAT_FPVIOL:   // Flash Protection Violation Error
-		return (DFU_STATUS_errADDRESS);
+		return DFU_STATUS_errADDRESS;
 	case FTFL_FSTAT_MGSTAT0:  // Memory Controller Command Completion Error
-		return (DFU_STATUS_errADDRESS);
+		return DFU_STATUS_errADDRESS;
 	*/
 
 	case 0:
 	default: // No error
-		return (DFU_STATUS_OK);
+		return DFU_STATUS_OK;
 	}
 }
-
-
-static struct dfu_ctx dfu_ctx;
 
 void init_usb_bootloader( int config )
 {
 	dfu_init( setup_read, setup_write, finish_write, &dfu_ctx );
 
-#if defined(_mk20dx256vlh7_) // Kiibohd-dfu
-	// Make sure SysTick counter is disabled
+	// Make sure SysTick counter is disabled (dfu has issues otherwise)
 	SYST_CSR = 0;
-#endif
+
+	// Clear verified status
+	dfu_ctx.verified = DFU_VALIDATION_UNKNOWN;
 }
 
+// Code jump routine
+__attribute__((noreturn))
+static inline void jump_to_app( uintptr_t addr )
+{
+	// addr is in r0
+	__asm__("ldr sp, [%[addr], #0]\n"
+		"ldr pc, [%[addr], #4]"
+		:: [addr] "r" (addr));
+	// NOTREACHED
+	__builtin_unreachable();
+}
+
+// Main entry point
+// NOTE: Code does not start here, see Lib/mk20dx.c
 void main()
 {
-#if defined(_mk20dx128vlf5_) // Kiibohd-dfu / Infinity
-	// XXX McHCK uses B16 instead of A19
-
-	// Enabling LED to indicate we are in the bootloader
-	GPIOA_PDDR |= (1<<19);
-	// Setup pin - A19 - See Lib/pin_map.mchck for more details on pins
-	PORTA_PCR19 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
-	GPIOA_PSOR |= (1<<19);
-
-#elif defined(_mk20dx256vlh7_) // Kiibohd-dfu
-	// Enabling LED to indicate we are in the bootloader
-	GPIOA_PDDR |= (1<<5);
-	// Setup pin - A5 - See Lib/pin_map.mchck for more details on pins
-	PORTA_PCR5 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
-	GPIOA_PSOR |= (1<<5);
-
-	// TODO Add CMake configuration for disabling
-	// Set LCD backlight on ICED to Red
-	GPIOC_PDDR |= (1<<1);
-	PORTC_PCR1 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
-	GPIOC_PCOR |= (1<<1);
-#else
-#error "Incompatible chip for bootloader"
-#endif
-
+	// Prepared debug output (when supported)
 	uart_serial_setup();
 	printNL( NL "Bootloader DFU-Mode" );
 
-	// Bootloader Enter Reasons
+	// Early setup
+	Chip_reset();
+	Device_reset();
+
+	// Bootloader Section
+	extern uint32_t _app_rom;
+
+	// We treat _app_rom as pointer to directly read the stack
+	// pointer and check for valid app code.  This is no fool
+	// proof method, but it should help for the first flash.
+	//
+	// Purposefully disabling the watchdog *after* the reset check this way
+	// if the chip goes into an odd state we'll reset to the bootloader (invalid firmware image)
+	// RCM_SRS0 & 0x20
+	//
+	// Also checking for ARM lock-up signal (invalid firmware image)
+	// RCM_SRS1 & 0x02
+	if (    // PIN  (External Reset Pin/Switch)
+		RCM_SRS0 & 0x40
+		// WDOG (Watchdog timeout)
+		|| RCM_SRS0 & 0x20
+		// LOCKUP (ARM Core LOCKUP event)
+		|| RCM_SRS1 & 0x02
+		// Blank flash check
+		|| _app_rom == 0xffffffff
+		// Software reset
+		|| memcmp( (uint8_t*)&VBAT, sys_reset_to_loader_magic, sizeof(sys_reset_to_loader_magic) ) == 0
+	)
+	{
+		// Bootloader mode
+		memset( (uint8_t*)&VBAT, 0, sizeof(sys_reset_to_loader_magic) );
+	}
+	else
+	{
+		// Enable Watchdog before jumping
+		// XXX (HaaTa) This watchdog cannot trigger an IRQ, as we're relocating the vector table
+		WDOG_UNLOCK = WDOG_UNLOCK_SEQ1;
+		WDOG_UNLOCK = WDOG_UNLOCK_SEQ2;
+		WDOG_TOVALH = 0;
+		WDOG_TOVALL = 1000;
+		WDOG_STCTRLH |= WDOG_STCTRLH_WDOGEN;
+
+		// Firmware mode
+		uint32_t addr = (uintptr_t)&_app_rom;
+		SCB_VTOR = addr; // relocate vector table
+		jump_to_app( addr );
+	}
+
+	// Bootloader Entry Reasons
 	print(" RCM_SRS0 - ");
 	printHex( RCM_SRS0 & 0x60 );
 	print( NL " RCM_SRS1 - ");
@@ -225,53 +306,29 @@ void main()
 	printHex( memcmp( (uint8_t*)&VBAT, sys_reset_to_loader_magic, sizeof(sys_reset_to_loader_magic) ) == 0 );
 	print( NL );
 
+	// Device/Chip specific setup
+	Chip_setup();
+	Device_setup();
+
 #ifdef FLASH_DEBUG
 	for ( uint8_t sector = 0; sector < 3; sector++ )
+	{
 		sector_print( &_app_rom, sector, 16 );
+	}
 	print( NL );
 #endif
 
 	flash_prepare_flashing();
-	usb_init( &dfu_device );
+	dfu_usb_init(); // Initialize USB and dfu
 
-#if defined(_mk20dx256vlh7_) // Kiibohd-dfu
-	// PTA4 - USB Swap
-	// Start, disabled
-	GPIOA_PDDR |= (1<<4);
-	PORTA_PCR4 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
-	GPIOA_PCOR |= (1<<4);
-
-	#define USBPortSwapDelay_ms 1000
-	// For keyboards with dual usb ports, doesn't do anything on keyboards without them
-	// If a USB connection is not detected in 2 seconds, switch to the other port to see if it's plugged in there
-	uint32_t last_ms = systick_millis_count;
-	uint8_t attempt = 0;
+	// Main Loop
 	for (;;)
 	{
-		usb_poll();
+		dfu_usb_poll();
 
-		// Only check for swapping after delay
-		uint32_t wait_ms = systick_millis_count - last_ms;
-		if ( wait_ms < USBPortSwapDelay_ms + attempt / 2 * USBPortSwapDelay_ms )
-		{
-			continue;
-		}
-
-		last_ms = systick_millis_count;
-
-		// USB not initialized, attempt to swap
-		if ( usb.state != USBD_STATE_ADDRESS )
-		{
-			print("USB not initializing, port swapping (if supported)");
-			GPIOA_PTOR |= (1<<4);
-			attempt++;
-		}
+		// Device specific functions
+		Chip_process();
+		Device_process();
 	}
-#else
-	for (;;)
-	{
-		usb_poll();
-	}
-#endif
 }
 

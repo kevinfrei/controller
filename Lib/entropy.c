@@ -25,12 +25,13 @@
  */
 
 // Not used for the mk20dx128vlf5 (not enough flash space)
-#if defined(_bootloader_) && defined(mk20dx128vlf5)
+#if defined(_bootloader_) && defined(_mk20dx128vlf5_)
 
 
 // ----- Includes -----
 
 #include "entropy.h"
+#include "mk20dx.h"
 
 
 

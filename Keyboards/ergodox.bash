@@ -25,7 +25,7 @@ BaseMap="scancode_map leftHand slave1 rightHand"
 # This is the default layer of the keyboard
 # NOTE: To combine kll files into a single layout, separate them by spaces
 # e.g.  DefaultMap="mylayout mylayoutmod"
-#DefaulMap="mdergo1Overlay lcdFuncMap"
+#DefaultMap="infinity_ergodox/mdergo1Overlay infinity_ergodox/lcdFuncMap"
 DefaultMap="Kustom-0-Base lcdFuncMap-home-left"
 
 # This is where you set the additional layers
@@ -43,6 +43,9 @@ PartialMaps[6]="Kustom-6-Game lcdFuncMap-home-left"
 PartialMaps[7]="Kustom-7-MacFunc lcdFuncMap-home-left"
 PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-home-left"
 PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-home-left"
+
+#PartialMaps[1]="infinity_ergodox/iced_func"
+#PartialMaps[2]="infinity_ergodox/iced_numpad"
 
 
 ##########################
@@ -74,13 +77,13 @@ Compiler="gcc"
 # Shouldn't need to touch this section
 
 # Check if the library can be found
-if [ ! -f cmake.bash ]; then
+if [ ! -f "${BASH_SOURCE%/*}/cmake.bash" ]; then
 	echo "ERROR: Cannot find 'cmake.bash'"
 	exit 1
 fi
 
 # Load the library
-source cmake.bash
+source "${BASH_SOURCE%/*}/cmake.bash"
 
 
 #########################
@@ -97,7 +100,7 @@ BuildPath="HomeRight"
 
 # Only changing the basemap (everything else is the same)
 # Generally shouldn't be changed, this will affect every layer
-BaseMap="defaultMap rightHand slave1 leftHand"
+BaseMap="scancode_map rightHand slave1 leftHand"
 
 # This is the default layer of the keyboard
 # NOTE: To combine kll files into a single layout, separate them by spaces
@@ -164,7 +167,7 @@ PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-work-left"
 PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-work-left"
 
 # Load the library (starts the build)
-source cmake.bash
+source "${BASH_SOURCE%/*}/cmake.bash"
 
 
 #########################
