@@ -125,8 +125,7 @@ PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-home-right"
 PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-home-right"
 
 # Load the library (starts the build)
-source cmake.bash
-
+source "${BASH_SOURCE%/*}/cmake.bash"
 
 #########################
 # Re-run for right side #
@@ -209,4 +208,4 @@ PartialMaps[8]="Kustom-8-WinFunc lcdFuncMap-work-right"
 PartialMaps[9]="Kustom-9-WinEdit lcdFuncMap-work-right"
 
 # Load the library (starts the build)
-source cmake.bash
+source "${BASH_SOURCE%/*}/cmake.bash"
