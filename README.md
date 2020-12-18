@@ -1,3 +1,6 @@
+## WARNING:
+> This stuff is archived because I've moved on to manufacturing my *own* keyboards. Feel free to look around, but I don't touch this stuff at all anymore (I no longer even own an ErgoDox)
+
 Why do you want to use my fork? 1 reason: pure, unbridled awesomeness.
 This awesomeness exists in 2 primary places. The first is this: I've fixed a nasty bug that didn't allow more than 254 macros (if you want all my awesomeness, you should go get my kll stuff, too, to see why I have 254 macros). The second is that I have an updated (rewritten) version of bitmap2struct (I rewrote it in NodeJS, cuz I don't really do Python) that lets you create all sorts of cool, nifty icons instead of the goofy "I:C" and the numbers 0-9. As an example, I have a little ErgoDox icon as the base layer, and then I have a Left (and Right) ErgoDox icon as 1, the Start button as 2, the Apple icon as 3, and a number of other images that indicate at a glance what your keyboard is up to.
 
